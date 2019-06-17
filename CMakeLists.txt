@@ -4,3 +4,5 @@ project(FaultyOS)
 set(CMAKE_CXX_STANDARD 17)
 
 add_executable(FaultyOS main.cpp)
+
+add_executable(Test testMain.cpp)
