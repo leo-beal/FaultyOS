@@ -74,8 +74,8 @@ void watchProc(std::string type){
 void count(std::ofstream& log, int from, int64_t offset){
 
     for(int x = from; x <= 100; x++){
-        offset = 0;
         std::this_thread::sleep_for(std::chrono::milliseconds(offset));
+        offset = 0;
         log << "\n" << x << " " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "\r" << std::flush;
         std::cout << x << std::endl << std::flush;
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -128,11 +128,11 @@ int main(int argc, char* argv[]) {
         while(iLog >> num >> time){};
         iLog.close();
         //std::cout << num << " " << time << std::endl;
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << " " << time << std::endl;
+        //std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << " " << time << std::endl;
         int64_t test = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::cout << test - time << std::endl;
+        //std::cout << test - time << std::endl;
         int64_t offset = 1000 - (test - time);
-        std::cout << offset << std::endl;
+        //std::cout << offset << std::endl;
         if(offset < 0){
             offset = 0;
         }
