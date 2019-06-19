@@ -40,14 +40,13 @@ VOID startup(LPCTSTR lpApplicationName)
     CloseHandle( pi.hThread );
 }
 
-void count(const std::ofstream& log, int from, int offset){
+void count(std::ofstream& log, int from, int offset){
 
     for(int x = from; x <= 100; x++){
-        //checkpoint
-        //increment
-        //wait
-
         std::this_thread::sleep_for(std::chrono::milliseconds(offset));
+        log.clear();
+        log.seekp(0, std::fstream::beg);
+        log  << x << " " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << "\r" << std::flush;
         std::cout << x << std::endl << std::flush;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -58,7 +57,9 @@ int main(int argc, char* argv[]) {
     bool dontSpawn = false;
 
     std::ofstream log;
-    log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
+    log.open("checkpoint.txt", std::ofstream::out);
+
+    //log << "test";
 
     for(int x = 0; x < argc; x++){
         if(std::string(argv[x]) == "-N"){
@@ -69,10 +70,10 @@ int main(int argc, char* argv[]) {
         }
     }
     if(!dontSpawn) {
-        startup("FaultyOS.exe");
-        startup("FaultyOS.exe");
-        startup("FaultyOS.exe");
-        startup("FaultyOS.exe");
+        //startup("FaultyOS.exe");
+        //startup("FaultyOS.exe");
+        //startup("FaultyOS.exe");
+        //startup("FaultyOS.exe");
     }
 
     count(log, 0, 0);
