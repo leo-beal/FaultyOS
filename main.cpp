@@ -7,13 +7,14 @@
 #include <windows.h>
 #include <fstream>
 
-std::mutex oneCount;
+DWORD PID;
+DWORD WPID;
+//HANDLE ME;
+HANDLE THEM;
 
 
-
-VOID startup(LPCTSTR lpApplicationName)
+void startup(LPCTSTR lpApplicationName, std::string options)
 {
-    std::string option = "-N -T";
     // additional information
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -25,7 +26,7 @@ VOID startup(LPCTSTR lpApplicationName)
 
     // start the program up
     CreateProcess( lpApplicationName,   // the path
-                   (char*)option.c_str(),        // Command line
+                   (char*)options.c_str(),        // Command line
                    NULL,           // Process handle not inheritable
                    NULL,           // Thread handle not inheritable
                    FALSE,          // Set handle inheritance to FALSE
@@ -36,8 +37,27 @@ VOID startup(LPCTSTR lpApplicationName)
                    &pi             // Pointer to PROCESS_INFORMATION structure (removed extra parentheses)
     );
     // Close process and thread handles.
-    CloseHandle( pi.hProcess );
+    //CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
+    THEM = pi.hProcess;
+}
+
+//type being watched, not type of watcher
+void watchProc(HANDLE hProcess, std::string type){
+    DWORD dwExitCode;
+    while(true){
+        if(GetExitCodeProcess(hProcess,&dwExitCode)){
+            if(dwExitCode==STILL_ACTIVE) {
+                //still running
+            }
+            else {
+                //not running anymore
+            }
+        }
+        else{
+            //query failed, handle probably doesn't have the PROCESS_QUERY_INFORMATION access
+        }
+    }
 }
 
 void count(std::ofstream& log, int from, int offset){
@@ -54,7 +74,9 @@ void count(std::ofstream& log, int from, int offset){
 
 int main(int argc, char* argv[]) {
 
-    bool dontSpawn = false;
+    bool isCounter = true;
+
+    PID = GetCurrentProcessId();
 
     std::ofstream log;
     log.open("checkpoint.txt", std::ofstream::out);
@@ -62,18 +84,22 @@ int main(int argc, char* argv[]) {
     //log << "test";
 
     for(int x = 0; x < argc; x++){
-        if(std::string(argv[x]) == "-N"){
-            dontSpawn = true;
+        if(std::string(argv[x]) == "-t"){
+            if(std::string(argv[x+1]) == "watch"){
+                isCounter = false;
+            }
         }
-        if(std::string(argv[x]) == "-T"){
-            std::cout << "I am a child!" << std::endl;
+        if(std::string(argv[x]) == "-p"){
+            WPID = std::stoi(std::string(argv[x+1]));
         }
     }
-    if(!dontSpawn) {
-        //startup("FaultyOS.exe");
-        //startup("FaultyOS.exe");
-        //startup("FaultyOS.exe");
-        //startup("FaultyOS.exe");
+
+    if(isCounter && argc == 1){
+        startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
+    }else if(isCounter && argc > 1){
+
+    }else{
+
     }
 
     count(log, 0, 0);
