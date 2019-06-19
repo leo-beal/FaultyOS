@@ -10,7 +10,7 @@
 
 DWORD PID;
 DWORD WPID;
-//HANDLE ME;
+
 HANDLE THEM;
 
 bool watch = true;
@@ -39,8 +39,7 @@ void startup(LPCTSTR lpApplicationName, std::string options)
                    &si,            // Pointer to STARTUPINFO structure
                    &pi             // Pointer to PROCESS_INFORMATION structure (removed extra parentheses)
     );
-    // Close process and thread handles.
-    //CloseHandle( pi.hProcess );
+    // Close process handle.
     CloseHandle( pi.hThread );
     THEM = pi.hProcess;
 }
@@ -55,14 +54,12 @@ void watchProc(std::string type){
             }
             else {
                 //not running anymore
-                //std::cout << "Process died. Restarting" << std::endl;
                 CloseHandle(THEM);
                 if(type == "count"){
                     startup("FaultyOS.exe", "-t count -p " + std::to_string(PID));
                 }else{
                     startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
                 }
-                //std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
         }
         else{
@@ -91,9 +88,6 @@ int main(int argc, char* argv[]) {
 
     std::ofstream log;
     std::ifstream iLog;
-    //log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
-
-    //log << "test";
 
     for(int x = 0; x < argc; x++){
         if(std::string(argv[x]) == "-t"){
@@ -111,28 +105,18 @@ int main(int argc, char* argv[]) {
         startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
         std::thread tCount(count, std::ref(log), 0, 0);
         std::thread tWatch(watchProc, "watch");
-        //count(log, 0, 0);
         tCount.join();
         tWatch.join();
     }else if(isCounter && argc > 1){
         THEM = OpenProcess(PROCESS_ALL_ACCESS, false, WPID);
-        //get file info
-        //std::cout << "Attempting open of checkpoint.txt" << std::endl;
         iLog.open("checkpoint.txt");
-        if(iLog.is_open()){
-            //std::cout << "Opened checkpoint.txt" << std::endl;
-        }
         log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
         int num;
-        uint64_t time;
-        while(iLog >> num >> time){};
+        uint64_t last;
+        while(iLog >> num >> last);
         iLog.close();
-        //std::cout << num << " " << time << std::endl;
-        //std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << " " << time << std::endl;
-        int64_t test = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        //std::cout << test - time << std::endl;
-        int64_t offset = 1000 - (test - time);
-        //std::cout << offset << std::endl;
+        int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        int64_t offset = 1000 - (now - last);
         if(offset < 0){
             offset = 0;
         }
