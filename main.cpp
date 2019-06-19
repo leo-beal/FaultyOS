@@ -52,6 +52,12 @@ void watchProc(HANDLE hProcess, std::string type){
             }
             else {
                 //not running anymore
+                if(type == "count"){
+                    startup("FaultyOS.exe", "-t count -p " + std::to_string(PID));
+                }else{
+                    startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
         else{
@@ -60,7 +66,7 @@ void watchProc(HANDLE hProcess, std::string type){
     }
 }
 
-void count(std::ofstream& log, int from, int offset){
+void count(std::ofstream& log, int from, uint64_t offset){
 
     for(int x = from; x <= 100; x++){
         std::this_thread::sleep_for(std::chrono::milliseconds(offset));
@@ -79,6 +85,7 @@ int main(int argc, char* argv[]) {
     PID = GetCurrentProcessId();
 
     std::ofstream log;
+    std::ifstream iLog;
     log.open("checkpoint.txt", std::ofstream::out);
 
     //log << "test";
@@ -96,13 +103,31 @@ int main(int argc, char* argv[]) {
 
     if(isCounter && argc == 1){
         startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
+        std::thread tCount(count, std::ref(log), 0, 0);
+        std::thread tWatch(watchProc, THEM, "watch");
+        //count(log, 0, 0);
+        tCount.join();
+        tWatch.join();
     }else if(isCounter && argc > 1){
-
+        THEM = OpenProcess(PROCESS_ALL_ACCESS, false, WPID);
+        //get file info
+        iLog.open("checkpoint.txt");
+        std::string num;
+        std::string time;
+        std::getline(iLog, num, ' ');
+        std::getline(iLog, time, ' ');
+        std::cout << num << " " << time << std::endl;
+        uint64_t offset = 1000 - std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - std::stoi(time);
+        std::thread tCount(count, std::ref(log), std::stoi(num) + 1, offset);
+        std::thread tWatch(watchProc, THEM, "watch");
+        tCount.join();
+        tWatch.join();
     }else{
-
+        THEM = OpenProcess(PROCESS_ALL_ACCESS, false, WPID);
+        watchProc(THEM, "count");
     }
 
-    count(log, 0, 0);
+
 
     return 0;
 }
