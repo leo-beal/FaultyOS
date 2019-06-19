@@ -52,12 +52,14 @@ void watchProc(HANDLE hProcess, std::string type){
             }
             else {
                 //not running anymore
+                std::cout << "Process died. Restarting" << std::endl;
+                CloseHandle(THEM);
                 if(type == "count"){
                     startup("FaultyOS.exe", "-t count -p " + std::to_string(PID));
                 }else{
                     startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                //std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
         }
         else{
