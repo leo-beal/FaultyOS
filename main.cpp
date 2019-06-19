@@ -6,6 +6,7 @@
 #include <processthreadsapi.h>
 #include <windows.h>
 #include <fstream>
+#include <sstream>
 
 DWORD PID;
 DWORD WPID;
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
 
     std::ofstream log;
     std::ifstream iLog;
-    log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
+    //log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
 
     //log << "test";
 
@@ -102,7 +103,7 @@ int main(int argc, char* argv[]) {
     }
 
     if(isCounter && argc == 1){
-        log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app | std::ofstream::trunc);
+        log.open("checkpoint.txt", std::ofstream::out | std::ofstream::trunc);
         startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
         std::thread tCount(count, std::ref(log), 0, 0);
         std::thread tWatch(watchProc, "watch");
@@ -110,14 +111,25 @@ int main(int argc, char* argv[]) {
         tCount.join();
         tWatch.join();
     }else if(isCounter && argc > 1){
-        log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
         THEM = OpenProcess(PROCESS_ALL_ACCESS, false, WPID);
         //get file info
+        std::cout << "Attempting open of checkpoint.txt" << std::endl;
         iLog.open("checkpoint.txt");
+        if(iLog.is_open()){
+            std::cout << "Opened checkpoint.txt" << std::endl;
+        }
+        std::string lastPoint;
+        while(iLog.eof()){
+            std::getline(iLog, lastPoint);
+            std::cout << lastPoint << std::endl;
+        }
+        iLog.close();
+        log.open("checkpoint.txt", std::ofstream::out | std::ofstream::app);
+        std::stringstream ss(lastPoint);
         std::string num;
         std::string time;
-        std::getline(iLog, num, ' ');
-        std::getline(iLog, time, ' ');
+        std::getline(ss, num, ' ');
+        std::getline(ss, time, ' ');
         std::cout << num << " " << time << std::endl;
         int64_t offset = 1000 - std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - std::stoi(time);
         if(offset < 0){
