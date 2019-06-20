@@ -13,6 +13,8 @@ DWORD WPID;
 
 HANDLE THEM;
 
+const std::string self = "StillAlive.exe";
+
 bool watch = true;
 
 
@@ -56,9 +58,9 @@ void watchProc(std::string type){
                 //not running anymore
                 CloseHandle(THEM);
                 if(type == "count"){
-                    startup("FaultyOS.exe", "-t count -p " + std::to_string(PID));
+                    startup(self.c_str(), "-t count -p " + std::to_string(PID));
                 }else{
-                    startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
+                    startup(self.c_str(), "-t watch -p " + std::to_string(PID));
                 }
             }
         }
@@ -102,7 +104,7 @@ int main(int argc, char* argv[]) {
 
     if(isCounter && argc == 1){
         log.open("checkpoint.txt", std::ofstream::out | std::ofstream::trunc);
-        startup("FaultyOS.exe", "-t watch -p " + std::to_string(PID));
+        startup(self.c_str(), "-t watch -p " + std::to_string(PID));
         std::thread tCount(count, std::ref(log), 0, 0);
         std::thread tWatch(watchProc, "watch");
         tCount.join();
